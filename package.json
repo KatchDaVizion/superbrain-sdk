@@ -1,0 +1,33 @@
+{
+  "name": "superbrain-sdk",
+  "version": "0.1.0",
+  "description": "Minimal Node SDK for the SuperBrain SN442 knowledge network on Bittensor",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "license": "MIT",
+  "author": "KatchDaVizion <david.louischarles@gmail.com>",
+  "homepage": "https://github.com/KatchDaVizion/superbrain-desktop-work",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KatchDaVizion/superbrain-desktop-work.git",
+    "directory": "sdk"
+  },
+  "keywords": [
+    "bittensor",
+    "superbrain",
+    "sn442",
+    "ai",
+    "knowledge",
+    "decentralized",
+    "rag",
+    "subnet"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "README.md"
+  ]
+}
