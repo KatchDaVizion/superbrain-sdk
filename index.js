@@ -3,8 +3,9 @@
  *
  * Wraps the Frankfurt seed node REST endpoints. Pure ES2020 + global fetch
  * (Node >= 18). No dependencies. Configurable base URL via constructor or
- * the SUPERBRAIN_NODE env var. Each method returns the parsed JSON body —
- * errors throw with status + endpoint context for fast debugging.
+ * the SB_NODE_URL env var (SUPERBRAIN_NODE is also accepted for back-compat).
+ * Each method returns the parsed JSON body — errors throw with status +
+ * endpoint context for fast debugging.
  */
 
 'use strict'
@@ -12,7 +13,12 @@
 const DEFAULT_NODE = 'http://46.225.114.202:8400'
 
 function getBase(node) {
-  return (node || process.env.SUPERBRAIN_NODE || DEFAULT_NODE).replace(/\/+$/, '')
+  return (
+    node ||
+    process.env.SB_NODE_URL ||
+    process.env.SUPERBRAIN_NODE ||
+    DEFAULT_NODE
+  ).replace(/\/+$/, '')
 }
 
 async function http(method, url, body) {

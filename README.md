@@ -92,9 +92,11 @@ await sb.query('What is SuperBrain?', { node: 'http://my-node.example.com:8400' 
 Or set globally via env var:
 
 ```bash
-export SUPERBRAIN_NODE=http://my-node.example.com:8400
+export SB_NODE_URL=http://my-node.example.com:8400
 node my-app.js
 ```
+
+`SUPERBRAIN_NODE` is also accepted as a fallback for backwards compatibility. Precedence: per-call `options.node` → `SB_NODE_URL` → `SUPERBRAIN_NODE` → Frankfurt default.
 
 ## Errors
 
