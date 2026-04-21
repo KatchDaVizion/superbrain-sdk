@@ -6,8 +6,10 @@ Four functions: `query`, `share`, `earnings`, `peers`. No dependencies, just `fe
 
 ## Install
 
+Not yet on npm (coming at mainnet). Install directly from GitHub:
+
 ```bash
-npm install superbrain-sdk
+npm install github:KatchDaVizion/superbrain-sdk
 ```
 
 ## Quick start
@@ -111,7 +113,7 @@ try {
 
 - Not a full Bittensor wallet client. Use `btcli` or `bittensor` Python package for staking, registration, and key management.
 - Not a streaming client. All methods are request/response. Streaming chat is available through the SuperBrain desktop app or the `sb` CLI.
-- Not yet published to npm. This is a 0.1.0 reference implementation that ships with the SuperBrain monorepo. Publish to npm once mainnet is live.
+- Not yet published to npm — install from the GitHub URL above until mainnet launch.
 
 ## License
 
