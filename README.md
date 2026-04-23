@@ -17,9 +17,13 @@ npm install github:KatchDaVizion/superbrain-sdk
 ```js
 const sb = require('superbrain-sdk')
 
-// Ask the network a question
-const a = await sb.query('What is SuperBrain?')
-console.log(a.answer)
+// List peers on the network (fast, always available)
+const p = await sb.peers()
+console.log(`${p.peers.length} peers online`)
+
+// Check earnings for a hotkey
+const e = await sb.earnings('5EHQh8frNHpjY5Cw7HuPiNgN4DotBYXWnHk2dvDFbQqJmUTavk')
+console.log(`${e.chunks_contributed} chunks, ${e.total_retrievals} retrievals`)
 
 // Share a chunk and earn retrievals on your hotkey
 const r = await sb.share('My validated knowledge', {
@@ -28,13 +32,9 @@ const r = await sb.share('My validated knowledge', {
 })
 console.log(r.chunk_id)
 
-// Check earnings
-const e = await sb.earnings('5EHQh8frNHpjY5Cw7HuPiNgN4DotBYXWnHk2dvDFbQqJmUTavk')
-console.log(`${e.chunks_contributed} chunks, ${e.total_retrievals} retrievals`)
-
-// List peers
-const p = await sb.peers()
-console.log(`${p.length} peers online`)
+// Ask the network a question (RAG pipeline — may take a few seconds)
+const a = await sb.query('What is SuperBrain?')
+console.log(a.answer)
 ```
 
 ## API
