@@ -48,7 +48,7 @@ export interface EarningsOptions {
 
 export interface EarningsResponse {
   hotkey: string
-  total_chunks: number
+  chunks_contributed: number
   total_retrievals: number
   estimated_tao: number
   chunks: Array<Record<string, unknown>>
