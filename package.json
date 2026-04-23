@@ -6,11 +6,10 @@
   "types": "index.d.ts",
   "license": "MIT",
   "author": "KatchDaVizion <david.louischarles@gmail.com>",
-  "homepage": "https://github.com/KatchDaVizion/superbrain-desktop-work",
+  "homepage": "https://github.com/KatchDaVizion/superbrain-sdk",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/KatchDaVizion/superbrain-desktop-work.git",
-    "directory": "sdk"
+    "url": "git+https://github.com/KatchDaVizion/superbrain-sdk.git"
   },
   "keywords": [
     "bittensor",
