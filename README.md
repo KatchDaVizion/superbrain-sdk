@@ -2,7 +2,7 @@
 
 Minimal Node client for the **SuperBrain SN442** knowledge network on Bittensor.
 
-Four functions: `query`, `share`, `earnings`, `peers`. No dependencies, just `fetch`. Works in Node 18+ and any modern runtime that ships a global `fetch`.
+Five functions: `query`, `share`, `earnings`, `peers`, `generateSigningKey`. No dependencies, just `fetch` + Node's built-in `crypto` for Ed25519. Works in Node 18+.
 
 ## Install
 
@@ -30,7 +30,17 @@ const r = await sb.share('My validated knowledge', {
   title: 'My note',
   hotkey: '5EHQh8frNHpjY5Cw7HuPiNgN4DotBYXWnHk2dvDFbQqJmUTavk',
 })
-console.log(r.chunk_id)
+console.log(r.chunk_id, r.sig_reason)  // chunk_id, 'legacy-unsigned'
+
+// (optional) sign contributions with your Ed25519 identity for attribution-proof shares
+const key = sb.generateSigningKey()  // { seedHex, publicKeyHex } — persist seedHex securely
+const r2 = await sb.share('Signed knowledge', {
+  title: 'My signed note',
+  category: 'research',
+  hotkey: '5EHQh8frNHpjY5Cw7HuPiNgN4DotBYXWnHk2dvDFbQqJmUTavk',
+  signingKey: key.seedHex,
+})
+console.log(r2.sig_reason)  // 'verified'
 
 // Ask the network a question (RAG pipeline — may take a few seconds)
 const a = await sb.query('What is SuperBrain?')

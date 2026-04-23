@@ -33,13 +33,29 @@ export interface ShareOptions {
   submitter?: string
   /** Bittensor ss58 hotkey — earns retrieval-based TAO */
   hotkey?: string
+  /** Topic category */
+  category?: string
+  /** Hex seed (64 chars / 32 bytes). When provided, the chunk is Ed25519-signed and
+   *  the server verifies before persisting. Use generateSigningKey() to create one. */
+  signingKey?: string
 }
 
 export interface ShareResponse {
   chunk_id: string
-  status: string
-  timestamp?: string
+  status?: string
+  success?: boolean
+  message?: string
+  privacy?: string
+  /** "verified" | "legacy-unsigned" | "verify-skipped (pynacl missing)" */
+  sig_reason?: string
   [key: string]: unknown
+}
+
+export interface SigningKey {
+  /** 64-char hex (32-byte Ed25519 seed). Treat as private. */
+  seedHex: string
+  /** 64-char hex of the corresponding Ed25519 public key. Safe to publish. */
+  publicKeyHex: string
 }
 
 export interface EarningsOptions {
@@ -99,11 +115,18 @@ export function earnings(hotkey: string, options?: EarningsOptions): Promise<Ear
  */
 export function peers(options?: PeersOptions): Promise<PeersResponse>
 
+/**
+ * Generate a fresh Ed25519 signing keypair for attribution-proof contributions.
+ * Persist `seedHex` securely; pass it as `options.signingKey` to share().
+ */
+export function generateSigningKey(): SigningKey
+
 declare const sdk: {
   query: typeof query
   share: typeof share
   earnings: typeof earnings
   peers: typeof peers
+  generateSigningKey: typeof generateSigningKey
 }
 
 export default sdk

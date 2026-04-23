@@ -1,6 +1,6 @@
 {
   "name": "superbrain-sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Minimal Node SDK for the SuperBrain SN442 knowledge network on Bittensor",
   "main": "index.js",
   "types": "index.d.ts",

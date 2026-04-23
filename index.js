@@ -10,7 +10,49 @@
 
 'use strict'
 
+const crypto = require('node:crypto')
+
 const DEFAULT_NODE = 'http://46.225.114.202:8400'
+
+// Ed25519 PKCS8 DER prefix (RFC 8410). Prepend to a 32-byte seed to get a valid PKCS8 key.
+const PKCS8_ED25519_PREFIX = Buffer.from('302e020100300506032b657004220420', 'hex')
+
+function _seedToPrivateKey(seedHex) {
+  if (typeof seedHex !== 'string' || seedHex.length !== 64) {
+    throw new Error('SuperBrain SDK: signingKey must be a 64-char hex string (32-byte ed25519 seed)')
+  }
+  const seed = Buffer.from(seedHex, 'hex')
+  if (seed.length !== 32) throw new Error('SuperBrain SDK: signingKey hex decoded to ' + seed.length + ' bytes (need 32)')
+  const der = Buffer.concat([PKCS8_ED25519_PREFIX, seed])
+  return crypto.createPrivateKey({ key: der, format: 'der', type: 'pkcs8' })
+}
+
+function _publicKeyHex(privateKey) {
+  const spkiDer = crypto.createPublicKey(privateKey).export({ format: 'der', type: 'spki' })
+  return spkiDer.subarray(spkiDer.length - 32).toString('hex')
+}
+
+function _canonicalizeShareBody(obj) {
+  const ordered = {
+    category: (obj.category || '').trim() || 'general',
+    content: obj.content,
+    hotkey: obj.contributor_hotkey || obj.hotkey || '',
+    source: obj.source,
+    title: obj.title,
+  }
+  return Buffer.from(JSON.stringify(ordered, Object.keys(ordered).sort()), 'utf-8')
+}
+
+/**
+ * Generate a fresh Ed25519 signing keypair. Returns { seedHex, publicKeyHex }.
+ * Persist `seedHex` somewhere safe (it's the private key). `publicKeyHex` is public.
+ */
+function generateSigningKey() {
+  const seed = crypto.randomBytes(32)
+  const seedHex = seed.toString('hex')
+  const publicKeyHex = _publicKeyHex(_seedToPrivateKey(seedHex))
+  return { seedHex, publicKeyHex }
+}
 
 function getBase(node) {
   return (
@@ -79,6 +121,9 @@ async function query(question, options = {}) {
  * @param {string} [options.license]          Default 'unknown'
  * @param {string} [options.submitter]        Default 'sb-user'
  * @param {string} [options.hotkey]           Bittensor ss58 — earns retrievals
+ * @param {string} [options.category]         Topic category (default '')
+ * @param {string} [options.signingKey]       Hex seed (64 chars) — if provided, the chunk is Ed25519-signed and the server
+ *                                             verifies the signature. Use generateSigningKey() to create one.
  * @param {string} [options.node]             Base URL override
  */
 async function share(content, options = {}) {
@@ -86,7 +131,7 @@ async function share(content, options = {}) {
     throw new Error('SuperBrain SDK: share() requires string content')
   }
   const base = getBase(options.node)
-  return http('POST', `${base}/knowledge/share`, {
+  const body = {
     content,
     title: options.title || 'Untitled',
     source: options.source || 'superbrain-sdk',
@@ -94,7 +139,19 @@ async function share(content, options = {}) {
     license: options.license || 'unknown',
     submitter: options.submitter || 'sb-user',
     contributor_hotkey: options.hotkey || '',
-  })
+    category: options.category || '',
+  }
+
+  if (options.signingKey) {
+    const privateKey = _seedToPrivateKey(options.signingKey)
+    const publicKeyHex = _publicKeyHex(privateKey)
+    const canonical = _canonicalizeShareBody(body)
+    const signatureHex = crypto.sign(null, canonical, privateKey).toString('hex')
+    body.public_key = publicKeyHex
+    body.signature = signatureHex
+  }
+
+  return http('POST', `${base}/knowledge/share`, body)
 }
 
 /**
@@ -125,5 +182,5 @@ async function peers(options = {}) {
   return http('GET', `${base}/peers`)
 }
 
-module.exports = { query, share, earnings, peers }
+module.exports = { query, share, earnings, peers, generateSigningKey }
 module.exports.default = module.exports
