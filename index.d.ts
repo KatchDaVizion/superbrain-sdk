@@ -6,7 +6,7 @@
  */
 
 export interface QueryOptions {
-  /** Override the seed node base URL */
+  /** Override the seed node base URL (skips local-first logic when provided) */
   node?: string
   /** Routing mode: 'auto' (default), 'rag', or 'extractive' */
   mode?: 'auto' | 'rag' | 'extractive'
@@ -15,6 +15,8 @@ export interface QueryOptions {
 export interface QueryResponse {
   answer: string
   citations: string[]
+  /** Present when answered by local Node Mode store */
+  sources?: Array<{ source: string; score: number }>
   method: string
   routed_to: string
   routing_confidence: number
@@ -115,11 +117,37 @@ export function earnings(hotkey: string, options?: EarningsOptions): Promise<Ear
  */
 export function peers(options?: PeersOptions): Promise<PeersResponse>
 
+export interface ContributeOptions extends ShareOptions {
+  node?: string
+}
+
+export interface NetworkStats {
+  stats: Record<string, unknown> | null
+  peers: { peers: Peer[] } | null
+  node: string
+  fetched_at: number
+}
+
+export interface NetworkStatsOptions {
+  node?: string
+}
+
 /**
  * Generate a fresh Ed25519 signing keypair for attribution-proof contributions.
  * Persist `seedHex` securely; pass it as `options.signingKey` to share().
  */
 export function generateSigningKey(): SigningKey
+
+/**
+ * Contribute a knowledge chunk to SN442 (simplified positional API).
+ * Wraps share() — earns retrieval TAO when hotkey is provided.
+ */
+export function contribute(text: string, title?: string, hotkey?: string, options?: ContributeOptions): Promise<ShareResponse>
+
+/**
+ * Get combined network statistics: feed stats + peer list from the seed node.
+ */
+export function getNetworkStats(options?: NetworkStatsOptions): Promise<NetworkStats>
 
 declare const sdk: {
   query: typeof query
@@ -127,6 +155,8 @@ declare const sdk: {
   earnings: typeof earnings
   peers: typeof peers
   generateSigningKey: typeof generateSigningKey
+  contribute: typeof contribute
+  getNetworkStats: typeof getNetworkStats
 }
 
 export default sdk

@@ -90,18 +90,48 @@ async function http(method, url, body) {
 }
 
 /**
- * Ask the network a question. Returns { answer, citations, method, routed_to,
- * routing_confidence, query_type, latency_ms, private, tier }.
+ * Ask the network a question. When no node is specified, tries the local Node Mode
+ * server at localhost:11435 first (private, instant), then falls back to Frankfurt.
+ * Returns { answer, citations, method, routed_to, routing_confidence, query_type, latency_ms, private, tier }.
  *
  * @param {string} question
  * @param {object} [options]
- * @param {string} [options.node]   Base URL for the seed node
+ * @param {string} [options.node]   Base URL override (skips local-first logic)
  * @param {string} [options.mode]   'auto' (default), 'rag', 'extractive'
  */
 async function query(question, options = {}) {
   if (!question || typeof question !== 'string') {
     throw new Error('SuperBrain SDK: query() requires a string question')
   }
+
+  if (!options.node) {
+    try {
+      const res = await fetch('http://localhost:11435/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ messages: [{ role: 'user', content: question }] }),
+        signal: AbortSignal.timeout(8000),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        return {
+          answer: data.choices?.[0]?.message?.content || '',
+          citations: [],
+          sources: data.sources || [],
+          method: 'local-node',
+          routed_to: 'local',
+          routing_confidence: 1,
+          query_type: 'local',
+          latency_ms: 0,
+          private: true,
+          tier: 0,
+        }
+      }
+    } catch {
+      // local node not running — fall through to remote
+    }
+  }
+
   const base = getBase(options.node)
   return http('POST', `${base}/query`, {
     question,
@@ -182,5 +212,42 @@ async function peers(options = {}) {
   return http('GET', `${base}/peers`)
 }
 
-module.exports = { query, share, earnings, peers, generateSigningKey }
+/**
+ * Contribute a knowledge chunk to the SN442 network (simplified API for Node Mode).
+ * Equivalent to share() but with positional args for quick one-liners.
+ *
+ * @param {string} text     The content to contribute
+ * @param {string} [title]  Default 'Untitled'
+ * @param {string} [hotkey] Bittensor ss58 — earns retrieval TAO
+ * @param {object} [options]
+ */
+async function contribute(text, title = 'Untitled', hotkey = '', options = {}) {
+  if (!text || typeof text !== 'string') {
+    throw new Error('SuperBrain SDK: contribute() requires string text')
+  }
+  return share(text, { title, hotkey, source: 'superbrain-sdk', ...options })
+}
+
+/**
+ * Get combined network statistics: feed stats + peer list from the seed node.
+ * Returns { stats, peers, node, fetched_at }.
+ *
+ * @param {object} [options]
+ * @param {string} [options.node]   Override base URL (defaults to Frankfurt)
+ */
+async function getNetworkStats(options = {}) {
+  const base = getBase(options.node)
+  const [stats, peersData] = await Promise.all([
+    http('GET', `${base}/feed/stats`).catch(() => null),
+    http('GET', `${base}/peers`).catch(() => null),
+  ])
+  return {
+    stats,
+    peers: peersData,
+    node: base,
+    fetched_at: Date.now(),
+  }
+}
+
+module.exports = { query, share, earnings, peers, generateSigningKey, contribute, getNetworkStats }
 module.exports.default = module.exports
